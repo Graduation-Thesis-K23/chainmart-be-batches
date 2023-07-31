@@ -32,7 +32,7 @@ export class CreateBatchDto {
 
   @IsUUID(4)
   @IsNotEmpty()
-  employee_create_id: string;
+  employee_create_phone: string;
 
   @IsDateString()
   @IsNotEmpty()

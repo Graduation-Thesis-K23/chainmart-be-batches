@@ -31,6 +31,8 @@ export class BatchesService {
   ) {}
 
   async create(createBatchDto: CreateBatchDto) {
+    console.log('createBatchDto', createBatchDto);
+
     const product = await this.productService.findById(
       createBatchDto.product_id,
     );
@@ -56,9 +58,17 @@ export class BatchesService {
     }
   }
 
-  async findAll() {
+  async findAll(branch_id: string) {
     try {
-      const batches = await this.batchRepository.find({});
+      const batches = await this.batchRepository.find({
+        where: {
+          branch_id,
+        },
+        relations: {
+          product: true,
+        },
+      });
+
       return instanceToPlain(batches);
     } catch (error) {
       console.error(error);

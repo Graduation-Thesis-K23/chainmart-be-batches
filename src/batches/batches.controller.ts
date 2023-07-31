@@ -11,12 +11,13 @@ export class BatchesController {
 
   @MessagePattern('batches.create')
   create(@Payload() createBatchDto: any) {
+    console.log('createBatchDto', createBatchDto);
     return this.batchesService.create(createBatchDto);
   }
 
   @MessagePattern('batches.findall')
-  findAll() {
-    return this.batchesService.findAll();
+  findAll(@Payload() branch_id: string) {
+    return this.batchesService.findAll(branch_id);
   }
 
   @MessagePattern('batches.findallbyproductid')
