@@ -29,6 +29,10 @@ export class CreateProductDto {
   @Type(() => Number)
   sale?: number;
 
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
   @IsNumber()
   @Type(() => Number)
   @IsOptional()

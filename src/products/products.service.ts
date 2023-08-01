@@ -14,8 +14,23 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto) {
+    const {
+      sync_id,
+      product_code,
+      price,
+      sale,
+      name,
+      acceptable_expiry_threshold,
+    } = createProductDto;
     try {
-      const product = this.productRepository.create(createProductDto);
+      const product = this.productRepository.create({
+        sync_id,
+        product_code,
+        price,
+        sale,
+        name,
+        acceptable_expiry_threshold,
+      });
       await this.productRepository.save(product);
     } catch (error) {
       console.error(error);
