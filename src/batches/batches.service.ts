@@ -157,6 +157,37 @@ export class BatchesService {
     }
   }
 
+  async getAvailableQuantity(availableDto) {
+    // const { product_id, branch_id } = availableDto[0];
+
+    console.log('availableDto', availableDto);
+
+    const products = await Promise.all(
+      availableDto.map(async ({ product_id, branch_id }) => {
+        const batches = await this.batchRepository.find({
+          where: {
+            product_id,
+            branch_id,
+          },
+        });
+
+        const available = batches.reduce(
+          (prev, curr) => prev + (curr.import_quantity - curr.sold),
+          0,
+        );
+
+        return {
+          product_id,
+          available,
+        };
+      }),
+    );
+
+    console.log('products-available', products);
+
+    return products;
+  }
+
   private async updateBatchesByOrderDetails(
     product_id: string,
     quantity: number,

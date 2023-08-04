@@ -44,4 +44,9 @@ export class BatchesController {
   processBatchesByOrderDetails(@Payload() orderDetails: any) {
     return this.batchesService.processBatchesByOrderDetails(orderDetails);
   }
+
+  @MessagePattern('batches.getavailablequantity')
+  getAvailableQuantity(@Payload() availableDto: any) {
+    return this.batchesService.getAvailableQuantity(availableDto);
+  }
 }
