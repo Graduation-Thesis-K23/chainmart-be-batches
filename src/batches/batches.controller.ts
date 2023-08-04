@@ -29,12 +29,12 @@ export class BatchesController {
   findOne(@Payload() id: string) {
     return this.batchesService.findById(id);
   }
-
+  /* 
   @MessagePattern('batches.update')
   update(@Payload() updateBatchDto: any) {
     return this.batchesService.update(updateBatchDto.id, updateBatchDto);
   }
-
+ */
   @MessagePattern('batches.delete')
   delete(@Payload() id: string) {
     return this.batchesService.delete(id);

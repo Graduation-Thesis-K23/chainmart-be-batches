@@ -11,7 +11,6 @@ import * as moment from 'moment';
 import { instanceToPlain } from 'class-transformer';
 
 import { CreateBatchDto } from './dto/create-batch.dto';
-import { UpdateBatchDto } from './dto/update-batch.dto';
 import { Batch } from './entities/batch.entity';
 import { Product } from 'src/products/entities/product.entity';
 import { ProductsService } from 'src/products/products.service';
@@ -111,9 +110,9 @@ export class BatchesService {
     }
   }
 
-  async update(id: string, updateBatchDto: UpdateBatchDto): Promise<any> {
+  /* async update(id: string, updateBatchDto: UpdateBatchDto): Promise<any> {
     return `This action updates a #${id} batch`;
-  }
+  } */
 
   async delete(id: string) {
     try {
@@ -137,17 +136,39 @@ export class BatchesService {
     await queryRunner.startTransaction();
 
     try {
+      // get branch_id from first have available quantity and return branch_id
+      const checkBranchCanSoldOrderDetails =
+        await this.getBranchCanSoldOrderDetails(
+          orderDetails.map(({ product_id, quantity }) => ({
+            product_id,
+            quantity,
+          })),
+        );
+
+      console.log(
+        'checkBranchCanSoldOrderDetails',
+        checkBranchCanSoldOrderDetails,
+      );
+
+      if (!checkBranchCanSoldOrderDetails) {
+        throw new RpcException(`Not sufficient quantity`);
+      }
+
       await Promise.all(
         orderDetails.map(async ({ product_id, quantity }) =>
           this.updateBatchesByOrderDetails(
             product_id,
             quantity,
+            checkBranchCanSoldOrderDetails,
             queryRunner.manager,
           ),
         ),
       );
       await queryRunner.commitTransaction();
-      return 'Packaged';
+      return {
+        branch_id: checkBranchCanSoldOrderDetails,
+        order_status: 'Approved',
+      };
     } catch (error) {
       console.error(error);
       await queryRunner.rollbackTransaction();
@@ -157,10 +178,48 @@ export class BatchesService {
     }
   }
 
-  async getAvailableQuantity(availableDto) {
-    // const { product_id, branch_id } = availableDto[0];
+  private async getBranchCanSoldOrderDetails(
+    orderDetails: any[],
+  ): Promise<string> {
+    // const {product_id, quantity} = orderDetails[0];
 
-    console.log('availableDto', availableDto);
+    // get all branch_id in batches
+    const branchIds = await this.batchRepository.query(
+      `SELECT DISTINCT branch_id FROM batches`,
+    );
+
+    console.log('branchIds', branchIds);
+
+    // get one branch_id have available quantity
+    for (const branchObj of branchIds) {
+      console.log('branch', branchObj);
+      const availableQuantity = await this.getAvailableQuantity2(
+        branchObj.branch_id,
+        orderDetails.map(({ product_id }) => product_id),
+      );
+
+      console.log('availableQuantity', availableQuantity);
+
+      const checkBranchCanSoldOrderDetails = orderDetails.every(
+        ({ product_id, quantity }) => {
+          const available = availableQuantity.find(
+            (item) => item.product_id === product_id,
+          );
+
+          return available && available.available >= quantity;
+        },
+      );
+
+      if (checkBranchCanSoldOrderDetails) {
+        return branchObj.branch_id;
+      }
+    }
+
+    return null;
+  }
+
+  async getAvailableQuantity(availableDto: any[]) {
+    // const { product_id, branch_id } = availableDto[0];
 
     const products = await Promise.all(
       availableDto.map(async ({ product_id, branch_id }) => {
@@ -188,9 +247,37 @@ export class BatchesService {
     return products;
   }
 
+  async getAvailableQuantity2(branch_id: string, product_ids: string[]) {
+    // const { product_id, branch_id } = availableDto[0];
+
+    const products = await Promise.all(
+      product_ids.map(async (product_id) => {
+        const batches = await this.batchRepository.find({
+          where: {
+            product_id,
+            branch_id,
+          },
+        });
+
+        const available = batches.reduce(
+          (prev, curr) => prev + (curr.import_quantity - curr.sold),
+          0,
+        );
+
+        return {
+          product_id,
+          available,
+        };
+      }),
+    );
+
+    return products;
+  }
+
   private async updateBatchesByOrderDetails(
     product_id: string,
     quantity: number,
+    branch_id: string,
     entityManager: EntityManager,
   ) {
     const product = await entityManager.findOne(Product, {
@@ -211,9 +298,7 @@ export class BatchesService {
       where: {
         product_id,
         expiry_date: MoreThanOrEqual(expiryDate),
-      },
-      order: {
-        expiry_date: 'ASC',
+        branch_id,
       },
     });
     if (batches.length === 0) {
@@ -242,5 +327,48 @@ export class BatchesService {
         break;
       }
     }
+
+    // Shout out for Hong Duc so this algorithm is not mine
+    // This algorithm is from Hong Duc
+    // Its so beautiful
+    // help me a lot
+    /* let requiredQuantity = quantity;
+
+    for (const batch of batchesWillSold) {
+      const batchRemainQuantity = batch.import_quantity - batch.sold;
+      const consumed = Math.min(requiredQuantity, batchRemainQuantity);
+
+      await entityManager.update(Batch, batch.id, {
+        sold: batch.sold + consumed,
+      });
+
+      requiredQuantity -= consumed;
+      if (requiredQuantity === 0) {
+        break;
+      }
+    } */
+
+    /* const totalQuantityInBatch = batches.reduce(
+      (prev, curr) => prev + (curr.import_quantity - curr.sold),
+      0,
+    );
+    if (totalQuantityInBatch < quantity) {
+      throw new Error('Not sufficient quantity');
+    }
+
+    let requiredQuantity = quantity;
+    for (const batch of batches) {
+      const batchRemainQuantity = batch.import_quantity - batch.sold;
+      const consumed = Math.min(requiredQuantity, batchRemainQuantity);
+
+      await entityManager.update(Batch, batch.id, {
+        sold: batch.sold + consumed,
+      });
+
+      requiredQuantity -= consumed;
+      if (requiredQuantity === 0) {
+        break;
+      }
+    } */
   }
 }
