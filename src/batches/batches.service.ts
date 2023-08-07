@@ -6,6 +6,7 @@ import {
   type EntityManager,
   MoreThanOrEqual,
   Repository,
+  MoreThan,
 } from 'typeorm';
 import * as moment from 'moment';
 import { instanceToPlain } from 'class-transformer';
@@ -129,6 +130,33 @@ export class BatchesService {
     }
   }
 
+  async approvedByEmployee(orderDetails, branch_id: string) {
+    console.log('orderDetails', orderDetails);
+    console.log('branch_id', branch_id);
+    const queryRunner = this.dataSource.createQueryRunner();
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      await Promise.all(
+        orderDetails.map(async ({ product_id, quantity }) =>
+          this.updateBatchesByOrderDetails(
+            product_id,
+            quantity,
+            branch_id,
+            queryRunner.manager,
+          ),
+        ),
+      );
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      console.error(error);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async processBatchesByOrderDetails(orderDetails) {
     const queryRunner = this.dataSource.createQueryRunner();
 
@@ -168,6 +196,43 @@ export class BatchesService {
       return {
         branch_id: checkBranchCanSoldOrderDetails,
         order_status: 'Approved',
+      };
+    } catch (error) {
+      console.error(error);
+      await queryRunner.rollbackTransaction();
+      throw new RpcException(`Failed`);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async checkAvailable(orderDetails) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // get branch_id from first have available quantity and return branch_id
+      const checkBranchCanSoldOrderDetails =
+        await this.getBranchCanSoldOrderDetails(
+          orderDetails.map(({ product_id, quantity }) => ({
+            product_id,
+            quantity,
+          })),
+        );
+
+      console.log(
+        'checkBranchCanSoldOrderDetails',
+        checkBranchCanSoldOrderDetails,
+      );
+
+      if (!checkBranchCanSoldOrderDetails) {
+        throw new RpcException(`Not sufficient quantity`);
+      }
+
+      return {
+        order_status: 'Created',
       };
     } catch (error) {
       console.error(error);
@@ -227,6 +292,7 @@ export class BatchesService {
           where: {
             product_id,
             branch_id,
+            expiry_date: MoreThan(moment().format('YYYY-MM-DD')),
           },
         });
 
@@ -256,6 +322,7 @@ export class BatchesService {
           where: {
             product_id,
             branch_id,
+            expiry_date: MoreThan(moment().format('YYYY-MM-DD')),
           },
         });
 
