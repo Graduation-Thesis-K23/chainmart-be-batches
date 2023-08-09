@@ -45,8 +45,9 @@ export class BatchesController {
     return this.batchesService.processBatchesByOrderDetails(orderDetails);
   }
 
-  @MessagePattern('batches.batches.approved_by_employee')
+  @MessagePattern('batches.approved_by_employee')
   approvedByEmployee(@Payload() order: any) {
+    console.log('order', order);
     /* 
     {
       order_id: order.id,
