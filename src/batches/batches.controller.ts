@@ -45,6 +45,30 @@ export class BatchesController {
     return this.batchesService.processBatchesByOrderDetails(orderDetails);
   }
 
+  @MessagePattern('batches.approved_by_employee')
+  approvedByEmployee(@Payload() order: any) {
+    console.log('order', order);
+    /* 
+    {
+      order_id: order.id,
+      order_details: order.order_details.map((order_detail) => ({
+        product_id: order_detail.product_id,
+        quantity: order_detail.quantity,
+      })),
+      branch_id: order.branch_id,
+    }
+    */
+    return this.batchesService.approvedByEmployee(
+      order.order_details,
+      order.branch_id,
+    );
+  }
+
+  @MessagePattern('batches.checkavailable')
+  checkAvailable(@Payload() orderDetails: any) {
+    return this.batchesService.checkAvailable(orderDetails);
+  }
+
   @MessagePattern('batches.getavailablequantity')
   getAvailableQuantity(@Payload() availableDto: any) {
     return this.batchesService.getAvailableQuantity(availableDto);
