@@ -313,6 +313,23 @@ export class BatchesService {
     return products;
   }
 
+  async getRemainingQuantity(id: string) {
+    console.log('getRemainingQuantity', id);
+    const batches = await this.batchRepository.find({
+      where: {
+        product_id: id,
+        expiry_date: MoreThan(moment().format('YYYY-MM-DD')),
+      },
+    });
+
+    const available = batches.reduce(
+      (prev, curr) => prev + (curr.import_quantity - curr.sold),
+      0,
+    );
+
+    return available;
+  }
+
   async getAvailableQuantity2(branch_id: string, product_ids: string[]) {
     // const { product_id, branch_id } = availableDto[0];
 

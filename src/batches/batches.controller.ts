@@ -73,4 +73,9 @@ export class BatchesController {
   getAvailableQuantity(@Payload() availableDto: any) {
     return this.batchesService.getAvailableQuantity(availableDto);
   }
+
+  @MessagePattern('batches.get_remaining_quantity')
+  getRemainingQuantity(@Payload() id: string) {
+    return this.batchesService.getRemainingQuantity(id);
+  }
 }
