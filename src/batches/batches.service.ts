@@ -327,7 +327,12 @@ export class BatchesService {
       0,
     );
 
-    return available;
+    const sold = batches.reduce((prev, curr) => prev + curr.sold, 0);
+
+    return {
+      available,
+      sold,
+    };
   }
 
   async getAvailableQuantity2(branch_id: string, product_ids: string[]) {
