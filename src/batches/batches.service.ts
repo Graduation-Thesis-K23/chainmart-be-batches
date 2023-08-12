@@ -7,6 +7,7 @@ import {
   MoreThanOrEqual,
   Repository,
   MoreThan,
+  In,
 } from 'typeorm';
 import * as moment from 'moment';
 import { instanceToPlain } from 'class-transformer';
@@ -361,6 +362,30 @@ export class BatchesService {
     );
 
     return products;
+  }
+
+  async getSoldByIds(ids: string[]) {
+    console.log('getSoldByIds', ids);
+    const batches = await this.batchRepository.find({
+      where: {
+        product_id: In(ids),
+      },
+    });
+
+    const solds = batches.reduce((prev, curr) => {
+      if (!prev[curr.product_id]) {
+        prev[curr.product_id] = 0;
+      }
+
+      prev[curr.product_id] += curr.sold;
+
+      return prev;
+    }, {});
+
+    return Object.entries(solds).map(([productId, sold]) => ({
+      productId,
+      sold,
+    }));
   }
 
   private async updateBatchesByOrderDetails(

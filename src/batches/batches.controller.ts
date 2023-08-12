@@ -78,4 +78,9 @@ export class BatchesController {
   getRemainingQuantity(@Payload() id: string) {
     return this.batchesService.getRemainingQuantity(id);
   }
+
+  @MessagePattern('batches.get-sold-by-ids')
+  getSoldByIds(@Payload() data: any) {
+    return this.batchesService.getSoldByIds(data.ids);
+  }
 }
