@@ -31,6 +31,10 @@ export class BatchesService {
     private readonly orchestrationClient: ClientKafka,
   ) {}
 
+  async healthCheck() {
+    return 'batches service is working';
+  }
+
   async create(createBatchDto: CreateBatchDto) {
     console.log('createBatchDto', createBatchDto);
 

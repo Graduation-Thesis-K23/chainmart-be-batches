@@ -9,6 +9,12 @@ import { ExceptionFilter } from 'src/filters/rpc-exception.filter';
 export class BatchesController {
   constructor(private readonly batchesService: BatchesService) {}
 
+  @MessagePattern('batches.health-check')
+  healthCheck() {
+    console.log('health-check batches');
+    return this.batchesService.healthCheck();
+  }
+
   @MessagePattern('batches.create')
   create(@Payload() createBatchDto: any) {
     console.log('createBatchDto', createBatchDto);
