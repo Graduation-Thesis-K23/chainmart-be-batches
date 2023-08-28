@@ -36,8 +36,6 @@ export class BatchesService {
   }
 
   async create(createBatchDto: CreateBatchDto) {
-    console.log('createBatchDto', createBatchDto);
-
     const product = await this.productService.findById(
       createBatchDto.product_id,
     );
@@ -136,8 +134,6 @@ export class BatchesService {
   }
 
   async approvedByEmployee(orderDetails, branch_id: string) {
-    console.log('orderDetails', orderDetails);
-    console.log('branch_id', branch_id);
     const queryRunner = this.dataSource.createQueryRunner();
     try {
       await queryRunner.connect();
@@ -177,11 +173,6 @@ export class BatchesService {
             quantity,
           })),
         );
-
-      console.log(
-        'checkBranchCanSoldOrderDetails',
-        checkBranchCanSoldOrderDetails,
-      );
 
       if (!checkBranchCanSoldOrderDetails) {
         throw new RpcException(`Not sufficient quantity`);
@@ -227,11 +218,6 @@ export class BatchesService {
           })),
         );
 
-      console.log(
-        'checkBranchCanSoldOrderDetails',
-        checkBranchCanSoldOrderDetails,
-      );
-
       if (!checkBranchCanSoldOrderDetails) {
         throw new RpcException(`Not sufficient quantity`);
       }
@@ -258,17 +244,12 @@ export class BatchesService {
       `SELECT DISTINCT branch_id FROM batches`,
     );
 
-    console.log('branchIds', branchIds);
-
     // get one branch_id have available quantity
     for (const branchObj of branchIds) {
-      console.log('branch', branchObj);
       const availableQuantity = await this.getAvailableQuantity2(
         branchObj.branch_id,
         orderDetails.map(({ product_id }) => product_id),
       );
-
-      console.log('availableQuantity', availableQuantity);
 
       const checkBranchCanSoldOrderDetails = orderDetails.every(
         ({ product_id, quantity }) => {
@@ -313,13 +294,10 @@ export class BatchesService {
       }),
     );
 
-    console.log('products-available', products);
-
     return products;
   }
 
   async getRemainingQuantity(id: string) {
-    console.log('getRemainingQuantity', id);
     const batches = await this.batchRepository.find({
       where: {
         product_id: id,
@@ -369,7 +347,6 @@ export class BatchesService {
   }
 
   async getSoldByIds(ids: string[]) {
-    console.log('getSoldByIds', ids);
     const batches = await this.batchRepository.find({
       where: {
         product_id: In(ids),

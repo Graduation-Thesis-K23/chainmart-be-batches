@@ -11,13 +11,11 @@ export class BatchesController {
 
   @MessagePattern('batches.health-check')
   healthCheck() {
-    console.log('health-check batches');
     return this.batchesService.healthCheck();
   }
 
   @MessagePattern('batches.create')
   create(@Payload() createBatchDto: any) {
-    console.log('createBatchDto', createBatchDto);
     return this.batchesService.create(createBatchDto);
   }
 
@@ -53,7 +51,6 @@ export class BatchesController {
 
   @MessagePattern('batches.approved_by_employee')
   approvedByEmployee(@Payload() order: any) {
-    console.log('order', order);
     /* 
     {
       order_id: order.id,
