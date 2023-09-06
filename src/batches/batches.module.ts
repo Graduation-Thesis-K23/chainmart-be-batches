@@ -21,11 +21,7 @@ import { ProductsModule } from 'src/products/products.module';
           options: {
             client: {
               clientId: 'orchestration',
-              brokers: [
-                `${configService.get('KAFKA_HOST')}:${configService.get(
-                  'KAFKA_PORT',
-                )}`,
-              ],
+              brokers: configService.get('KAFKA_BROKERS').split(','),
             },
             consumer: {
               groupId: 'orchestration-consumer-batches',
